@@ -305,11 +305,14 @@ block would be smaller to make up the difference.
 
 As we discussed on the \emph{tareador} analysis, the only dependency between tasks is the variable
 \texttt{sum}, so to guarantee that there are no data races we must apply a reduction. Given that we cannot use
-the \texttt{pragma omp for} directives, we decided to create a variable \texttt{sum_tmp} private on each
+the \texttt{pragma omp for} directives, we decided to create a variable \texttt{sum\_tmp} private on each
 task to store the sum of each task and then perform an atomic addition to \texttt{sum} at the end of the tasks.
+We also added \texttt{private(diff)} and \texttt{firstprivate(blockid)} since they where declared before the
+task (blockid has to be firstprivate since the value is needed).
+Listing~\ref{lst:jacobi_first} shows the first version of our code 
 
 \begin{listing}[H]
-    \caption{solver-omp.c Improved jacobi}%
+    \caption{solver-omp.c Initial OpenMP version of jacobi method}%
     \label{lst:jacobi_first}
     \inputminted[firstline=26,lastline=55]{c}{code/solver-omp-jacobi-v1.c}
 \end{listing}
@@ -319,6 +322,13 @@ divided the matrix in 4 blocks which is not optimal since if we have more than 4
 that are not doing any work. This can be seen in the paraver trace we generated and that we show in
 figure~\ref{fig:trace-jacobi0} where we can see that there are always 4 concurrent tasks and 4 threads are unused.
 
+We also noticed that there where huge sequential versions, which were caused by the matrix copy operation.
+In our analysis with \emph{tareador} we saw that there were no dependencies between loop iterations so
+we decided to parallelize it to remove this bottleneck. Our first approach, which was quite naive, was to
+assign a task to every iteration of the loop, however the code run much slower than the sequential
+version due to the massive overhead of the task creation, we decided to use the same geometric data
+decomposition used in the jacobi function.
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.8\textwidth]{jacobi_0_tasks}
@@ -326,7 +336,8 @@ figure~\ref{fig:trace-jacobi0} where we can see that there are always 4 concurre
     \label{fig:trace-jacobi0}
 \end{figure}
 
-Listing~\ref{lst:jacobi} shows the improved version of \emph{Jacobi}. We removed the outer \texttt{for}
+Listing~\ref{lst:jacobi} shows the improved version of \emph{Jacobi} with improvements on \texttt{copy\_mat}
+and jacobi. We removed the outer \texttt{for}
 since is not needed as we use the parallel region with all its threads to divide the matrix. We also
 applied the same division and parallelization approach to the \texttt{copy\_mat} function.
 In figure~\ref{fig:trace-jacobi1} we can see the improvement over the previous version and how this time
@@ -380,7 +391,25 @@ overhead.
 
 % Describe how did you implement the parallelization strategy for the Gauss-Seidel solver and how did you guarantee the proper synchronization between threads.
 
+% QUIERO LLORAR LLEVO UNA HORA DELANTE DEL ORDENADOR SIN ESCRIBIR UNA SOLA PALABRA...
+% F
 
+For implementing the parallelization strategy for the Gauss-Seidel solver we had to add two loops, for the rows and columns.
+
+
+A row or column based decomposition would not work in this case, since as we have seen in the
+tareador analysis, each iteration depends on the value of the previous row and column,
+which means that if we implemented it like that the resulting code would be sequential.
+
+The best approach is to divide the matrix in blocks and define the dependencies between the
+iterations using. Figure~\ref{fig:block-gauss} shows an example
+of the block decomposition and the dependencies in blue. For the task corresponding to
+the block $i,j$ to begin executing, it must wait for both $i-1, j$ and $i, j-1$ to finish.
+This kind of restriction can be defined using \texttt{}
+
+% hello? hi
+% hmmmmmmm, no falta un sink?
+%ahora meacabo de drogar, a ver si ahora me concentro mas
 
 \begin{figure}[H]
     \centering
@@ -404,6 +433,22 @@ As in the previous section, in figure~\ref{fig:strong-gauss} we can see the time
 of OMP threads, but in this case, of the execution of the Gauss-Seidel solver. We can observe how the execution time improves with the number of threads, and the speed-up gets better. But, as we can see, the speed-up is not even close to the ideal speed-up line, and that is because of the difference between the synchronization and computation for each thread, and that depends on the size of the block.
 
 % Finally explainhow did you obtain the optimum value for the ratio computation/synchronization in the parallelization of this solver for 8 threads.
+
+% esto nose mucho, pero bueno. He provado cambiando howmany un poco y con 16 me iba un poco mejor que con el resto.,...
+
+We tried changing the value of \texttt{howmany} and surprisingly, the best results where with \texttt{howmany = 16}:
+
+\begin{verbatim}
+Iterations        : 25000
+Resolution        : 254
+Algorithm         : 1 (Gauss-Seidel)
+Num. Heat sources : 2
+   1: (0.00, 0.00) 1.00 2.50 
+   2: (0.50, 1.00) 1.00 2.50 
+Time: 1.309 
+Flops and Flops per second: (8.806 GFlop => 6728.13 MFlop/s)
+Convergence to residual=0.000050: 12409 iterations
+\end{verbatim}
 
 
 \section{Parallelization strategies}%
