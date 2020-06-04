@@ -266,12 +266,18 @@ of the matrix \texttt{u}.
     \end{minipage}
 \end{figure}
 
+\pagebreak
 \section{OpenMP parallelization and execution analysis: \emph{Jacobi}}
+
+\begin{listing}[H]
+\caption{heat.h \texttt{\#define}}%
+\label{lst:heat_h}
+\inputminted[firstline=59,lastline=64]{c}{code/heat.h}
+\end{listing}
 
 In figure~\ref{fig:strong-jacobi} we can see the time and speed up plots for different number 
 of OMP threads. We can see that the execution time goes from ~5 seconds to less than 1 second
 achieving a very good speed up till around 9 threads.
-
 
 \begin{figure}[H]
     \centering
@@ -279,8 +285,25 @@ achieving a very good speed up till around 9 threads.
     \caption{Strong scalability graph \\ Jacobi}%
     \label{fig:strong-jacobi}
 \end{figure}
-% como se hacian r
+
+
+% TODO: dibujo de matriz
+
+\pagebreak
 \section{OpenMP parallelization and execution analysis: \emph{Gauss-Seidel}}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{heat-omp-strong-gauss-crop}
+    \caption{Strong scalability graph \\ Gauss}%
+    \label{fig:strong-gauss}
+\end{figure}
+
+% como puedes ver es una mierda el speedup, pero bueno. XD
+% pos si, pero ya es lo que toca
+
+As in the previous section, in figure~\ref{fig:strong-gauss} we can see the time and speed up plots for different number 
+of OMP threads.
 
 \section{Parallelization strategies}%
 \label{sec:parallelization_strategies}
