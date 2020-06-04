@@ -318,6 +318,15 @@ figure~\ref{fig:trace-jacobi0} where we can see that there are always 4 concurre
 Listing~\ref{lst:jacobi} shows the improved version of \emph{Jacobi}. We removed the outer \texttt{for}
 since is not needed as we use the parallel region with all its threads to divide the matrix. We also
 applied the same division and parallelization approach to the \texttt{copy\_mat} function.
+In figure~\ref{fig:trace-jacobi1} we can see the improvement over the previous version and how this time
+there are much more tasks and all threads are used in parallel, although some hace more work than others.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{jacobi_1_tasks}
+    \caption{Parallel tasks jacobi improved}%
+    \label{fig:trace-jacobi1}
+\end{figure}
 
 \begin{listing}[H]
     \caption{solver-omp.c Improved jacobi}%
@@ -327,16 +336,11 @@ applied the same division and parallelization approach to the \texttt{copy\_mat}
     \inputminted[firstline=25,lastline=52]{c}{code/solver-omp.c}
 \end{listing}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.8\textwidth]{jacobi_1_tasks}
-    \caption{Parallel tasks jacobi}%
-    \label{fig:trace-jacobi1}
-\end{figure}
-
 In figure~\ref{fig:strong-jacobi} we can see the time and speed-up plots for different number 
-of OMP threads. We can see that the execution time goes from ~5 seconds to less than 1 second
-achieving a very good speed-up till around 9 threads.
+of OMP threads of the improved version.
+We can see that the execution time goes from ~5 seconds to less than 1 second
+achieving a very good speed-up till around 9 threads, this is probably caused by the task creation
+overhead.
 
 \begin{figure}[H]
     \centering
