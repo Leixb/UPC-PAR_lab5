@@ -377,38 +377,57 @@ overhead.
 \pagebreak
 \section{OpenMP parallelization and execution analysis: \emph{Gauss-Seidel}}
 
-\begin{listing}[H]
-    \caption{solver.c}%
-    \label{lst:solver-omp-GS}
-    \inputminted[firstline=44,lastline=66]{c}{code/solver-omp-orig.c}
-\end{listing}
-
-\begin{listing}[H]
-    \caption{solver-omp-gauss.c}%
-    \label{lst:solver-omp-gauss}
-    \inputminted[firstline=57,lastline=89]{c}{code/solver-omp.c}
-\end{listing}
-
 % Describe how did you implement the parallelization strategy for the Gauss-Seidel solver and how did you guarantee the proper synchronization between threads.
 
 % QUIERO LLORAR LLEVO UNA HORA DELANTE DEL ORDENADOR SIN ESCRIBIR UNA SOLA PALABRA...
 % F
 
-For implementing the parallelization strategy for the Gauss-Seidel solver we had to add two loops, for the rows and columns.
-
+%For implementing the parallelization strategy for the Gauss-Seidel solver we had to add two loops, for the rows and columns.
 
 A row or column based decomposition would not work in this case, since as we have seen in the
 tareador analysis, each iteration depends on the value of the previous row and column,
 which means that if we implemented it like that the resulting code would be sequential.
 
 The best approach is to divide the matrix in blocks and define the dependencies between the
-iterations using. Figure~\ref{fig:block-gauss} shows an example
+iterations using. Figure~\ref{fig:blocks-gauss} shows an example
 of the block decomposition and the dependencies in blue. For the task corresponding to
 the block $i,j$ to begin executing, it must wait for both $i-1, j$ and $i, j-1$ to finish.
-This kind of restriction can be defined using \texttt{}
 
-% hello? hi
-% hmmmmmmm, no falta un sink?
+Listing~\ref{lst:gauss} shows the OpenMP implementation of the Gauss~Seidel method. Notice that we create 2
+outer for loops to divide the matrix both by rows and by columns. We define a reduction on the \texttt{sum}
+variable that created one of the data dependencies and we define 2 sinks depending on
+the block one row before and the other on the block on the column before.
+
+% pero es el paraver de tu pc? k raro.
+% si...
+% te acalaras con el paraver? NO :'( yo me he copiado las tres cosas esas a mi pc, estoy en el paraver y abro el .prv
+% now?
+
+%tienes k mirar los cfgs esos
+%creo que los teniamos en el lab3
+%sino igual los de por defecto ya sirven.
+%los cargas i miras cualquier mierda, nose
+%parallel regions o orderred o algo, esk depende del ccodfigo supongo
+% hay un cfg de ordered diria, pon ese i mira a ver si hay algo interesting
+% con ese no me sale nada, me dice que no hay. None of the events especified on the fitler apear in the trace
+%el .prv está bien seguro no? no tenia que hacer nada antes del qsub
+% lol, pues ni idea, pon parallel regions o states o algo.
+
+% nah, esta bien.
+% bueno no tiene el ultimo arreglo
+% quizas es eso. aqunqe tendira k tener ordereds igual.
+% a ver tenias k hacer make
+% bueno no
+% pork lo hace el script ya diria...
+% nose, pruebo a generar otra traza a ver k pasa.
+% okay... no me sale nada D: TT
+% yaya por eso me parece raro
+
+% yo en mi parte he hecho 2 caputras de mierda y ale.
+
+%el praogam tendria k ser esto diria.
+%p#pragma omp ordered depend(sink: row-1, col) depend(sink: row, col-1)
+
 %ahora meacabo de drogar, a ver si ahora me concentro mas
 
 \begin{figure}[H]
@@ -418,13 +437,25 @@ This kind of restriction can be defined using \texttt{}
     \label{fig:blocks-gauss}
 \end{figure}
 
+\begin{listing}[H]
+    \caption{solver-omp.c Gauss-Seidel}%
+    \label{lst:gauss}
+    \inputminted[firstline=57,lastline=89]{c}{code/solver-omp.c}
+\end{listing}
+
 
 % Analyse the speed–up (strong scalability)plot that has been obtained for the different numbers of processors, reasoning about the performance that is observed 
 % TODO: and including captures of Paraver windows to justify your explanations.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{jacobi_0_tasks}
+    \caption{Parallel tasks Jacobi}%
+    \label{fig:trace-jacobi0}
+\end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.3\textwidth]{heat-omp-strong-gauss-crop}
+    \includegraphics[width=0.3\textwidth]{figures/thread_state_heat_omp_8.png}
     \caption{Strong scalability graph \\ Gauss}%
     \label{fig:strong-gauss}
 \end{figure}
@@ -434,7 +465,9 @@ of OMP threads, but in this case, of the execution of the Gauss-Seidel solver. W
 
 % Finally explainhow did you obtain the optimum value for the ratio computation/synchronization in the parallelization of this solver for 8 threads.
 
-% esto nose mucho, pero bueno. He provado cambiando howmany un poco y con 16 me iba un poco mejor que con el resto.,...
+% esto nose mucho, pero bueno. He provado cambiando howmany un poco y con 16 me iba un poco mejor que con el resto....
+% okay ya me parece perf
+% estoy yo como para quejarme de algo jajaja
 
 We tried changing the value of \texttt{howmany} and surprisingly, the best results where with \texttt{howmany = 16}:
 
@@ -450,9 +483,18 @@ Flops and Flops per second: (8.806 GFlop => 6728.13 MFlop/s)
 Convergence to residual=0.000050: 12409 iterations
 \end{verbatim}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\textwidth]{figures/thread_state_heat_omp_8}
+    \caption{Strong scalability graph \\ Gauss}%
+    \label{fig:strong-gauss}
+\end{figure}
+
 
 \section{Parallelization strategies}%
 \label{sec:parallelization_strategies}
+
+
 
 \section{Performance evaluation}%
 \label{sec:performance_evaluation}
