@@ -308,6 +308,12 @@ As we discussed on the \emph{tareador} analysis, the only dependency between tas
 the \texttt{pragma omp for} directives, we decided to create a variable \texttt{sum_tmp} private on each
 task to store the sum of each task and then perform an atomic addition to \texttt{sum} at the end of the tasks.
 
+\begin{listing}[H]
+    \caption{solver-omp.c Improved jacobi}%
+    \label{lst:jacobi_first}
+    \inputminted[firstline=26,lastline=55]{c}{code/solver-omp-jacobi-v1.c}
+\end{listing}
+
 Our initial version of the code did not modify the variable \texttt{howmany} which meant that we always
 divided the matrix in 4 blocks which is not optimal since if we have more than 4 threads there are threads
 that are not doing any work. This can be seen in the paraver trace we generated and that we show in
