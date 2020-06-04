@@ -27,7 +27,7 @@ double relax_jacobi(double *u, double *utmp, unsigned sizex,
 {
     double diff, sum = 0.0;
 
-#pragma omp parallel private(diff)
+    #pragma omp parallel private(diff)
     {
         int howmany = omp_get_num_threads();
         int blockid = omp_get_thread_num();
@@ -44,7 +44,7 @@ double relax_jacobi(double *u, double *utmp, unsigned sizex,
                 sum_tmp += diff * diff;
             }
         }
-#pragma omp atomic
+        #pragma omp atomic
         sum += sum_tmp;
     }
 
@@ -58,9 +58,9 @@ double relax_gauss(double *u, unsigned sizex, unsigned sizey)
 {
     double unew, diff, sum = 0.0;
 
-#pragma omp parallel
+    #pragma omp parallel
     {
-        int howmany = omp_get_max_threads();
+        int howmany = omp_get_num_threads();
         #pragma omp for ordered(2) private(unew, diff) reduction(+:sum)
         for (int row = 0; row < howmany; ++row) {
             for (int col = 0; col < howmany; ++col) {
@@ -68,7 +68,7 @@ double relax_gauss(double *u, unsigned sizex, unsigned sizey)
                 int row_end = upperb(row, howmany, sizex);
                 int col_start = lowerb(col, howmany, sizey);
                 int col_end = upperb(col, howmany, sizey);
-                #pragma omp ordered depend(sink: row-1, col)
+                #pragma omp ordered depend(sink: row-1, col) depend(sink: row, col-1)
                 for (int i = max(1, row_start); i <= min(sizex - 2, row_end); i++) {
                     for (int j = max(1, col_start); j <= min(sizey - 2, col_end); j++) {
                         unew = 0.25 * (u[i * sizey + (j - 1)] +	// left
