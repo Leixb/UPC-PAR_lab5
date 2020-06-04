@@ -291,6 +291,49 @@ We decided to use this division as a basis for our OpenMP implementation.
     \inputminted[firstline=59,lastline=61]{c}{code/heat.h}
 \end{listing}
 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{jacobi_blocks}
+    \caption{Jacobi row block division with 4 threads and 8x8 matrix}%
+    \label{fig:blocks-jacobi}
+\end{figure}
+
+Figure~\ref{fig:blocks-jacobi} shows an example of the block division by rows performed on a 8x8 matrix
+with 4 threads. In cases where the number of threads does not divide the dimension of the matrix, the final
+block would be smaller to make up the difference.
+
+Our initial version of the code did not modify the variable \texttt{howmany} which meant that we always
+divided the matrix in 4 blocks which is not optimal since if we have more than 4 threads there are threads
+that are not doing any work. This can be seen in the paraver trace we generated and that we show in
+figure~\ref{fig:trace-jacobi0} where we can see that there are always 4 concurrent tasks and 4 threads are unused.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{jacobi_0_tasks}
+    \caption{Parallel tasks Jacobi}%
+    \label{fig:trace-jacobi0}
+\end{figure}
+
+Listing~\ref{lst:jacobi} shows the improved version of \emph{Jacobi}. We removed the outer \texttt{for}
+since is not needed as we use the parallel region with all its threads to divide the matrix. We also
+applied the same division and parallelization approach to the \texttt{copy\_mat} function.
+
+\begin{listing}[H]
+    \caption{solver-omp.c Improved jacobi}%
+    \label{lst:jacobi}
+    \inputminted[firstline=8,lastline=19]{c}{code/solver-omp.c}
+    \vspace{-2.5em}
+    \inputminted[firstline=25,lastline=52]{c}{code/solver-omp.c}
+\end{listing}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{jacobi_1_tasks}
+    \caption{Parallel tasks jacobi}%
+    \label{fig:trace-jacobi1}
+\end{figure}
+
 In figure~\ref{fig:strong-jacobi} we can see the time and speed-up plots for different number 
 of OMP threads. We can see that the execution time goes from ~5 seconds to less than 1 second
 achieving a very good speed-up till around 9 threads.
@@ -308,10 +351,23 @@ achieving a very good speed-up till around 9 threads.
 \pagebreak
 \section{OpenMP parallelization and execution analysis: \emph{Gauss-Seidel}}
 
-% Describe how did you implement the parallelisation strategy for the Gauss-Seidel solver and how did you guarantee the proper synchronization between threads.
+\begin{listing}[H]
+    \caption{solver.c}%
+    \label{lst:solver-omp-GS}
+    \inputminted[firstline=44,lastline=66]{c}{code/solver-omp-orig.c}
+\end{listing}
+
+\begin{listing}[H]
+    \caption{solver-omp-gauss.c}%
+    \label{lst:solver-omp-gauss}
+    \inputminted[firstline=57,lastline=89]{c}{code/solver-omp.c}
+\end{listing}
+
+% Describe how did you implement the parallelization strategy for the Gauss-Seidel solver and how did you guarantee the proper synchronization between threads.
 
 
-% Analyse the speed–up (strong scalability)plot that has been obtained for the different numbers of processors,  reasoning about the performance that is observed and including captures of Paraver windows to justify your explanations.
+% Analyse the speed–up (strong scalability)plot that has been obtained for the different numbers of processors, reasoning about the performance that is observed 
+% TODO: and including captures of Paraver windows to justify your explanations.
 
 \begin{figure}[H]
     \centering
@@ -321,8 +377,9 @@ achieving a very good speed-up till around 9 threads.
 \end{figure}
 
 As in the previous section, in figure~\ref{fig:strong-gauss} we can see the time and speed-up plots for different number 
-of OMP threads, but in this case, of the execution of the Gauss-Seidel version. We can observe how the execution time improves with the number of threads, and the speed-up gets better. But, as we can see, the speed-up is not even close to the ideal speed-up line, and that is because of the difference between the synchronization and computation for each thread, and that depends on the size of the block.
+of OMP threads, but in this case, of the execution of the Gauss-Seidel solver. We can observe how the execution time improves with the number of threads, and the speed-up gets better. But, as we can see, the speed-up is not even close to the ideal speed-up line, and that is because of the difference between the synchronization and computation for each thread, and that depends on the size of the block.
 
+% Finally explainhow did you obtain the optimum value for the ratio computation/synchronization in the parallelization of this solver for 8 threads.
 
 
 \section{Parallelization strategies}%
