@@ -270,14 +270,30 @@ of the matrix \texttt{u}.
 \section{OpenMP parallelization and execution analysis: \emph{Jacobi}}
 
 \begin{listing}[H]
-\caption{heat.h \texttt{\#define}}%
-\label{lst:heat_h}
-\inputminted[firstline=59,lastline=64]{c}{code/heat.h}
+    \caption{solver.c}%
+    \label{lst:solver-omp}
+    \inputminted[firstline=17,lastline=39]{c}{code/solver-omp-orig.c}
 \end{listing}
 
-In figure~\ref{fig:strong-jacobi} we can see the time and speed up plots for different number 
+If we examine \texttt{solver.c} (listing~\ref{lst:solver-omp} we see that there are some differences 
+from the \emph{tareador} version,
+mainly that there is an additional outer for loop that is repeated \texttt{howmany} times and determines the
+range of the \texttt{i} variable of the first \texttt{for}. If we look at what \texttt{lowerb} and
+\texttt{upperb} (listing~\ref{lst:heat_h}) we can see that they compute the index bounds of the block
+number \texttt{id} if there are \texttt{n} indices divided in \texttt{p} blocks.
+
+The code splits the matrix in \texttt{howmany} (in this case 4) blocks of rows and computes them.
+We decided to use this division as a basis for our OpenMP implementation.
+
+\begin{listing}[H]
+    \caption{heat.h \texttt{\#define}}%
+    \label{lst:heat_h}
+    \inputminted[firstline=59,lastline=61]{c}{code/heat.h}
+\end{listing}
+
+In figure~\ref{fig:strong-jacobi} we can see the time and speed-up plots for different number 
 of OMP threads. We can see that the execution time goes from ~5 seconds to less than 1 second
-achieving a very good speed up till around 9 threads.
+achieving a very good speed-up till around 9 threads.
 
 \begin{figure}[H]
     \centering
@@ -292,6 +308,11 @@ achieving a very good speed up till around 9 threads.
 \pagebreak
 \section{OpenMP parallelization and execution analysis: \emph{Gauss-Seidel}}
 
+% Describe how did you implement the parallelisation strategy for the Gauss-Seidel solver and how did you guarantee the proper synchronization between threads.
+
+
+% Analyse the speed–up (strong scalability)plot that has been obtained for the different numbers of processors,  reasoning about the performance that is observed and including captures of Paraver windows to justify your explanations.
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.3\textwidth]{heat-omp-strong-gauss-crop}
@@ -299,11 +320,10 @@ achieving a very good speed up till around 9 threads.
     \label{fig:strong-gauss}
 \end{figure}
 
-% como puedes ver es una mierda el speedup, pero bueno. XD
-% pos si, pero ya es lo que toca
+As in the previous section, in figure~\ref{fig:strong-gauss} we can see the time and speed-up plots for different number 
+of OMP threads, but in this case, of the execution of the Gauss-Seidel version. We can observe how the execution time improves with the number of threads, and the speed-up gets better. But, as we can see, the speed-up is not even close to the ideal speed-up line, and that is because of the difference between the synchronization and computation for each thread, and that depends on the size of the block.
 
-As in the previous section, in figure~\ref{fig:strong-gauss} we can see the time and speed up plots for different number 
-of OMP threads.
+
 
 \section{Parallelization strategies}%
 \label{sec:parallelization_strategies}
