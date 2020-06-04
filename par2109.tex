@@ -295,13 +295,16 @@ We decided to use this division as a basis for our OpenMP implementation.
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.3\textwidth]{jacobi_blocks}
-    \caption{Jacobi row block division with 4 threads and 8x8 matrix}%
+    \caption{Jacobi row block division with 4 threads on a 8x8 matrix}%
     \label{fig:blocks-jacobi}
 \end{figure}
 
 Figure~\ref{fig:blocks-jacobi} shows an example of the block division by rows performed on a 8x8 matrix
 with 4 threads. In cases where the number of threads does not divide the dimension of the matrix, the final
 block would be smaller to make up the difference.
+
+As we discussed on the \emph{tareador} analysis, the only dependency between tasks is the variable
+\texttt{sum}, so to guarantee that there 
 
 Our initial version of the code did not modify the variable \texttt{howmany} which meant that we always
 divided the matrix in 4 blocks which is not optimal since if we have more than 4 threads there are threads
@@ -319,7 +322,7 @@ Listing~\ref{lst:jacobi} shows the improved version of \emph{Jacobi}. We removed
 since is not needed as we use the parallel region with all its threads to divide the matrix. We also
 applied the same division and parallelization approach to the \texttt{copy\_mat} function.
 In figure~\ref{fig:trace-jacobi1} we can see the improvement over the previous version and how this time
-there are much more tasks and all threads are used in parallel, although some hace more work than others.
+there are much more tasks and all threads are used in parallel, although some have more work than others.
 
 \begin{figure}[H]
     \centering
@@ -368,6 +371,13 @@ overhead.
 \end{listing}
 
 % Describe how did you implement the parallelization strategy for the Gauss-Seidel solver and how did you guarantee the proper synchronization between threads.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.3\textwidth]{gauss_blocks}
+    \caption{Gauss block decomposition with 4 threads on a 8x8 matrix}%
+    \label{fig:blocks-gauss}
+\end{figure}
 
 
 % Analyse the speed–up (strong scalability)plot that has been obtained for the different numbers of processors, reasoning about the performance that is observed 
