@@ -28,29 +28,27 @@ double relax_jacobi(double *u, double *utmp, unsigned sizex,
 {
     double diff, sum = 0.0;
 
-#pragma omp parallel
+    int howmany = 4;
+    #pragma omp parallel
+    #pragma omp single
+    for (int blockid = 0; blockid < howmany; ++blockid)
+    #pragma omp task firstprivate(blockid) private(diff)
     {
-        int howmany = omp_get_num_threads();
-#pragma omp single
-        for (int blockid = 0; blockid < howmany; ++blockid)
-#pragma omp task firstprivate(blockid) private(diff)
-        {
-            int i_start = lowerb(blockid, howmany, sizex);
-            int i_end = upperb(blockid, howmany, sizex);
-            double sum_tmp = 0.0;
-            for (int i = max(1, i_start); i <= min(sizex - 2, i_end); i++) {
-                for (int j = 1; j <= sizey - 2; j++) {
-                    utmp[i * sizey + j] = 0.25 * (u[i * sizey + (j - 1)] +	// left
-                            u[i * sizey + (j + 1)] +	// right
-                            u[(i - 1) * sizey + j] +	// top
-                            u[(i + 1) * sizey + j]);	// bottom
-                    diff = utmp[i * sizey + j] - u[i * sizey + j];
-                    sum_tmp += diff * diff;
-                }
+        int i_start = lowerb(blockid, howmany, sizex);
+        int i_end = upperb(blockid, howmany, sizex);
+        double sum_tmp = 0.0;
+        for (int i = max(1, i_start); i <= min(sizex - 2, i_end); i++) {
+            for (int j = 1; j <= sizey - 2; j++) {
+                utmp[i * sizey + j] = 0.25 * (u[i * sizey + (j - 1)] +	// left
+                        u[i * sizey + (j + 1)] +	// right
+                        u[(i - 1) * sizey + j] +	// top
+                        u[(i + 1) * sizey + j]);	// bottom
+                diff = utmp[i * sizey + j] - u[i * sizey + j];
+                sum_tmp += diff * diff;
             }
-#pragma omp atomic
-            sum += sum_tmp;
         }
+        #pragma omp atomic
+        sum += sum_tmp;
     }
 
     return sum;
